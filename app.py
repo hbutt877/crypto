@@ -152,11 +152,11 @@ def getMinMax():
     try:
         min = float(min)
     except:
-        min = 'null'
+        min = None
     try:
         max = float(max)
     except:
-        max = 'null'
+        max = None
     r = {'min': min,'max': max}
     print(r,file=sys.stderr)
     return jsonify(r)
