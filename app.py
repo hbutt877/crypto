@@ -118,8 +118,9 @@ def getRate():
     deposit = request.args.get('deposit',default=0)
     receive = request.args.get('receive',default=0)
     amount =  request.args.get('amount',default=0)
-
-    a = requests.get('https://api.simpleswap.io/v1/get_estimated?api_key={}&fixed=&currency_from={}&currency_to={}&amount={}'.format(API_KEY,deposit,receive,amount)).json()
+    session = requests.Session()
+    session.trust_env = False
+    a = session.get('https://api.simpleswap.io/v1/get_estimated?api_key={}&fixed=&currency_from={}&currency_to={}&amount={}'.format(API_KEY,deposit,receive,amount)).json()
     r = {'rate': a}
     print(r,file=sys.stderr)
     return jsonify(r)
@@ -142,11 +143,32 @@ def validateaddress():
     else:
         return {"valid": True}
 
+
+@app.route('/validateextra')
+def validateextra():
+    symbol = request.args.get('symbol',default=0)
+    extra = request.args.get('extra',default=0)
+    validation_address = ''
+    for i in allCurrencies:
+        if(i['symbol'] == symbol):
+            validation_extra = i["validation_extra"]
+    if(validation_extra is None):
+        return {"valid": False}
+    elif(validation_extra==''):
+        return {"valid": False}
+
+    if(re.search(validation_extra,extra) is None):
+        return {"valid":False}
+    else:
+        return {"valid": True}
+
 @app.route('/getminmax')
 def getMinMax():
     deposit = request.args.get('deposit',default=0)
     receive = request.args.get('receive',default=0)
-    a = requests.get('https://api.simpleswap.io/v1/get_ranges?api_key={}&fixed=&currency_from={}&currency_to={}'.format(API_KEY,deposit,receive)).json()
+    session = requests.Session()
+    session.trust_env = False
+    a = session.get('https://api.simpleswap.io/v1/get_ranges?api_key={}&fixed=&currency_from={}&currency_to={}'.format(API_KEY,deposit,receive)).json()
     min = a['min']
     max = a['max']
     try:
