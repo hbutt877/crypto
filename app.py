@@ -94,8 +94,7 @@ def createexchange():
     else:
         r = requests.post('https://api.simpleswap.io/v1/create_exchange?api_key='+API_KEY,json={"fixed": "", "currency_from":depositCurrency,"currency_to":receiveCurrency,"address_to":address,"amount":amount,'extra_id_to':extraid}).json()
     if('code' in r):
-        if(r['code']==400):
-            return jsonify({'id':-1})
+        return jsonify({'id':-1})
     else:
         id = r['id']
         return jsonify({'id': id})
