@@ -78,6 +78,30 @@ def login():
         return jsonify(depositCurrency)
         # return render_template("login.html",depositCurrency=depositCurrency)
 
+@app.route("/createexchange", methods=["POST"])
+def createexchange():
+    data = request.get_json(force=True)
+    print(data,file=sys.stderr)
+    amount = data.get("amount")
+    print(amount,file=sys.stderr)
+    address= data.get("address")
+    depositCurrency = data.get('depositcurrency')
+    receiveCurrency = data.get('receivecurrency')
+    extraid = data.get('extraid')
+    # new_amount = requests.get('https://api.simpleswap.io/v1/get_estimated?api_key=b72d5b0f-9505-4063-9104-5d7a1c314562&fixed=false&currency_from=btc&currency_to=eth&amount='+amount).text
+    if(extraid=='' or extraid is None):
+        r = requests.post('https://api.simpleswap.io/v1/create_exchange?api_key='+API_KEY,json={"fixed": "", "currency_from":depositCurrency,"currency_to":receiveCurrency,"address_to":address,"amount":amount}).json()
+    else:
+        r = requests.post('https://api.simpleswap.io/v1/create_exchange?api_key='+API_KEY,json={"fixed": "", "currency_from":depositCurrency,"currency_to":receiveCurrency,"address_to":address,"amount":amount,'extra_id_to':extraid}).json()
+    if('code' in r):
+        if(r['code']==400):
+            return jsonify({'id':-1})
+    else:
+        id = r['id']
+        return jsonify({'id': id})
+
+
+
 @app.route("/exchange")
 def exchange():
     r = request.args.get('id',0)
