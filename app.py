@@ -101,6 +101,22 @@ def createexchange():
 
 
 
+@app.route('/getexchange')
+def getexchange():
+    id = request.args.get('id',default=0)
+    if(id==0):
+        return jsonify({'error': 'invalid id'})
+    session = requests.Session()
+    session.trust_env = False
+    a = session.get('https://api.simpleswap.io/v1/get_exchange?api_key={}&id={}'.format(API_KEY,id))
+    if(a.status_code==200):
+        a = a.json()
+    else:
+        return jsonify({'error': 'may be invalid id'})
+    return a
+
+
+
 @app.route("/exchange")
 def exchange():
     r = request.args.get('id',0)
