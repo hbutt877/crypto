@@ -111,11 +111,10 @@ def getexchange():
     a = session.get('https://api.simpleswap.io/v1/get_exchange?api_key={}&id={}'.format(API_KEY,id))
     if(a.status_code==200):
         a = a.json()
+        a.pop('currencies', None)
     else:
         return jsonify({'error': 'may be invalid id'})
     return a
-
-
 
 @app.route("/exchange")
 def exchange():
