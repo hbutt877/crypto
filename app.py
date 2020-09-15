@@ -156,9 +156,17 @@ def getRate():
     deposit = request.args.get('deposit',default=0)
     receive = request.args.get('receive',default=0)
     amount =  request.args.get('amount',default=0)
+    fixed =  request.args.get('fixed',default=0)
+    if(0 in (deposit,receive,amount,fixed)):
+        return jsonify({"error": "incomplete input"})
+    if(fixed=="true"):
+        fixed = True
+    else:
+        fixed = ""
+    print('https://api.simpleswap.io/v1/get_estimated?api_key={}&fixed={}&currency_from={}&currency_to={}&amount={}'.format(API_KEY,fixed,deposit,receive,amount),file=sys.stderr)
     session = requests.Session()
     session.trust_env = False
-    a = session.get('https://api.simpleswap.io/v1/get_estimated?api_key={}&fixed=&currency_from={}&currency_to={}&amount={}'.format(API_KEY,deposit,receive,amount)).json()
+    a = session.get('https://api.simpleswap.io/v1/get_estimated?api_key={}&fixed={}&currency_from={}&currency_to={}&amount={}'.format(API_KEY,fixed,deposit,receive,amount)).json()
     r = {'rate': a}
     print(r,file=sys.stderr)
     return jsonify(r)
