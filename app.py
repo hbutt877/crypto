@@ -170,7 +170,10 @@ def getRate():
     session.trust_env = False
     a = session.get('https://api.simpleswap.io/v1/get_estimated?api_key={}&fixed={}&currency_from={}&currency_to={}&amount={}'.format(API_KEY,fixed,deposit,receive,amount))
     if(a.status_code in (404,500)):
-        return jsonify({"error":True})
+        if(a.text=='Empty response'):
+            return jsonify({"error": "Empty response"})
+        else:
+            return jsonify({"error": "404,500"})
     else:
         a = a.json()
     r = {'rate': a}
@@ -230,7 +233,10 @@ def getMinMax():
     session.trust_env = False
     a = session.get('https://api.simpleswap.io/v1/get_ranges?api_key={}&fixed={}&currency_from={}&currency_to={}'.format(API_KEY,fixed,deposit,receive))
     if(a.status_code in (404,500)):
-        return jsonify({"error":True})
+        if(a.text=='Empty response'):
+            return jsonify({"error": "Empty response"})
+        else:
+            return jsonify({"error": "404,500"})
     else:
         a = a.json()
     min = a['min']
