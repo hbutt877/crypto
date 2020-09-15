@@ -159,8 +159,8 @@ def getRate():
     fixed =  request.args.get('fixed',default=0)
     if(0 in (deposit,receive,amount,fixed)):
         return jsonify({"error": "incomplete input"})
-    if(fixed=="true"):
-        fixed = True
+    if(fixed=="true" or fixed=="True" or fixed is True):
+        fixed = "true"
     else:
         fixed = ""
     print('https://api.simpleswap.io/v1/get_estimated?api_key={}&fixed={}&currency_from={}&currency_to={}&amount={}'.format(API_KEY,fixed,deposit,receive,amount),file=sys.stderr)
