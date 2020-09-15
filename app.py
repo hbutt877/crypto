@@ -85,21 +85,27 @@ def createexchange():
     data = request.get_json(force=True)
     print(data,file=sys.stderr)
     amount = data.get("amount")
-    print(amount,file=sys.stderr)
     address= data.get("address")
     depositCurrency = data.get('depositcurrency')
     receiveCurrency = data.get('receivecurrency')
     extraid = data.get('extraid')
+    fixed = data.get('fixed')
+    if(fixed=="true" or fixed=="True" or fixed is True):
+        fixed = "true"
+    else:
+        fixed = ""
+
     # new_amount = requests.get('https://api.simpleswap.io/v1/get_estimated?api_key=b72d5b0f-9505-4063-9104-5d7a1c314562&fixed=false&currency_from=btc&currency_to=eth&amount='+amount).text
     if(extraid=='' or extraid is None):
-        r = requests.post('https://api.simpleswap.io/v1/create_exchange?api_key='+API_KEY,json={"fixed": "", "currency_from":depositCurrency,"currency_to":receiveCurrency,"address_to":address,"amount":amount}).json()
+        r = requests.post('https://api.simpleswap.io/v1/create_exchange?api_key='+API_KEY,json={"fixed": fixed, "currency_from":depositCurrency,"currency_to":receiveCurrency,"address_to":address,"amount":amount})
     else:
-        r = requests.post('https://api.simpleswap.io/v1/create_exchange?api_key='+API_KEY,json={"fixed": "", "currency_from":depositCurrency,"currency_to":receiveCurrency,"address_to":address,"amount":amount,'extra_id_to':extraid}).json()
-    if('code' in r):
-        return jsonify({'id':-1})
-    else:
-        id = r['id']
+        r = requests.post('https://api.simpleswap.io/v1/create_exchange?api_key='+API_KEY,json={"fixed": fixed, "currency_from":depositCurrency,"currency_to":receiveCurrency,"address_to":address,"amount":amount,'extra_id_to':extraid})
+    print(r.status_code,file=sys.stderr)
+    if(r.status_code<400 and r.status_code>=200):
+        id = r.json()['id']
         return jsonify({'id': id})
+    else:
+        return jsonify({'id':-1})
 
 
 
@@ -111,7 +117,7 @@ def getexchange():
     session = requests.Session()
     session.trust_env = False
     a = session.get('https://api.simpleswap.io/v1/get_exchange?api_key={}&id={}'.format(API_KEY,id))
-    if(a.status_code==200):
+    if(a.status_code<400 and a.status_code>=200):
         a = a.json()
         a.pop('currencies', None)
     else:
@@ -169,13 +175,14 @@ def getRate():
     session = requests.Session()
     session.trust_env = False
     a = session.get('https://api.simpleswap.io/v1/get_estimated?api_key={}&fixed={}&currency_from={}&currency_to={}&amount={}'.format(API_KEY,fixed,deposit,receive,amount))
-    if(a.status_code in (404,500)):
+    if(a.status_code<400 and a.status_code>=200):
+        a = a.json()
+    else:
         if(a.text=='Empty response'):
             return jsonify({"error": "Empty response"})
         else:
             return jsonify({"error": "404,500"})
-    else:
-        a = a.json()
+
     r = {'rate': a}
     print(r,file=sys.stderr)
     return jsonify(r)
@@ -232,13 +239,14 @@ def getMinMax():
     session = requests.Session()
     session.trust_env = False
     a = session.get('https://api.simpleswap.io/v1/get_ranges?api_key={}&fixed={}&currency_from={}&currency_to={}'.format(API_KEY,fixed,deposit,receive))
-    if(a.status_code in (404,500)):
+    if(a.status_code<400 and a.status_code>=200):
+        a = a.json()
+    else:
         if(a.text=='Empty response'):
             return jsonify({"error": "Empty response"})
         else:
             return jsonify({"error": "404,500"})
-    else:
-        a = a.json()
+
     min = a['min']
     max = a['max']
     try:
