@@ -7,8 +7,10 @@ import json
 from timeloop import Timeloop
 from datetime import timedelta
 import re
+from flask_cors import CORS, cross_origin
 
 app = Flask(__name__)
+CORS(app)
 
 API_KEY = 'b72d5b0f-9505-4063-9104-5d7a1c314562'
 pairs = None
