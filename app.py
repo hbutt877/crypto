@@ -166,7 +166,11 @@ def getRate():
     print('https://api.simpleswap.io/v1/get_estimated?api_key={}&fixed={}&currency_from={}&currency_to={}&amount={}'.format(API_KEY,fixed,deposit,receive,amount),file=sys.stderr)
     session = requests.Session()
     session.trust_env = False
-    a = session.get('https://api.simpleswap.io/v1/get_estimated?api_key={}&fixed={}&currency_from={}&currency_to={}&amount={}'.format(API_KEY,fixed,deposit,receive,amount)).json()
+    a = session.get('https://api.simpleswap.io/v1/get_estimated?api_key={}&fixed={}&currency_from={}&currency_to={}&amount={}'.format(API_KEY,fixed,deposit,receive,amount))
+    if(a.status_code in (404,500)):
+        return jsonify({"error":True})
+    else:
+        a = a.json()
     r = {'rate': a}
     print(r,file=sys.stderr)
     return jsonify(r)
@@ -212,9 +216,21 @@ def validateextra():
 def getMinMax():
     deposit = request.args.get('deposit',default=0)
     receive = request.args.get('receive',default=0)
+    fixed =  request.args.get('fixed',default=0)
+    if(0 in (deposit,receive,fixed)):
+        return jsonify({"error": "incomplete input"})
+    if(fixed=="true" or fixed=="True" or fixed is True):
+        fixed = "true"
+    else:
+        fixed = ""
+    print('https://api.simpleswap.io/v1/get_ranges?api_key={}&fixed={}&currency_from={}&currency_to={}'.format(API_KEY,fixed,deposit,receive),file=sys.stderr)
     session = requests.Session()
     session.trust_env = False
-    a = session.get('https://api.simpleswap.io/v1/get_ranges?api_key={}&fixed=&currency_from={}&currency_to={}'.format(API_KEY,deposit,receive)).json()
+    a = session.get('https://api.simpleswap.io/v1/get_ranges?api_key={}&fixed={}&currency_from={}&currency_to={}'.format(API_KEY,fixed,deposit,receive))
+    if(a.status_code in (404,500)):
+        return jsonify({"error":True})
+    else:
+        a = a.json()
     min = a['min']
     max = a['max']
     try:
