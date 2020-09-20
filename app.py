@@ -5,7 +5,7 @@ import time
 import urllib3
 import json
 from timeloop import Timeloop
-from datetime import timedelta
+import datetime
 import re
 from flask_cors import CORS, cross_origin
 import _thread
@@ -45,7 +45,7 @@ _thread.start_new_thread(test1,())
 
 tl = Timeloop()
 
-@tl.job(interval=timedelta(seconds=10))
+@tl.job(interval=datetime.timedelta(seconds=10))
 def sample_job():
     _thread.start_new_thread(test3,())
     _thread.start_new_thread(test2,())
@@ -148,6 +148,9 @@ def getexchange():
     id = request.args.get('id',default=0)
     if(id==0):
         return jsonify({'error': 'invalid id'})
+#Remove dummy before deployment
+#Remove dummy before deployment
+#Remove dummy before deployment
     if(id=="dummy"):
         a = {"address_from":"34NjfWgoeH41M4MNdmi8LdSsRMG9qTcDpY","address_to":"GBH4TZYZ4IRCPO44CBOLFUHULU2WGALXTAVESQA6432MBJMABBB4GIYI","amount_from":"1","amount_to":"125258.30224260","currency_from":"btc","currency_to":"xlm","expected_amount":"1","extra_id_from":None,"extra_id_to":"abcd","id":"LKuAYqAUwMM","status":"finished","timestamp":"2020-09-13T19:23:24.767Z","tx_from":"input hash example","tx_to":"output hash example","type":"floating","updated_at":"2020-09-14T19:24:18.247Z"}
         return jsonify(a)
@@ -305,6 +308,17 @@ def getMinMax():
     r = {'min': min,'max': max}
     print(r,file=sys.stderr)
     return jsonify(r)
+
+@app.route('/gettime',methods=["POST"])
+def time():
+    data = request.get_json(force=True)
+    print(data,file=sys.stderr)
+    usertime = data.get("time")
+    time = datetime.datetime.strptime(usertime, '%Y-%m-%dT%H:%M:%S.%fZ')
+    timenowstring = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+    timenow = datetime.datetime.strptime(timenowstring, '%Y-%m-%dT%H:%M:%S.%fZ')
+    c = timenow - time
+    return ({"seconds":int(c.total_seconds())})
 
 if __name__ == "__main__":
     tl.start()
