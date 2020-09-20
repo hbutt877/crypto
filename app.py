@@ -318,7 +318,10 @@ def time():
     timenowstring = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
     timenow = datetime.datetime.strptime(timenowstring, '%Y-%m-%dT%H:%M:%S.%fZ')
     c = timenow - time
-    return ({"seconds":int(c.total_seconds())})
+    if(c.total_seconds()>(20*60)):
+        return ({"seconds":-1})
+    else:
+        return ({"seconds":(20*60) - int(c.total_seconds())})
 
 if __name__ == "__main__":
     tl.start()
