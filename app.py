@@ -76,9 +76,6 @@ def login():
         global pairs
         global fixedpairs
         global allCurrencies
-        import time
-
-        a = time.time()
         session = requests.Session()
         session.trust_env = False
         if(allCurrencies is None):
@@ -93,7 +90,6 @@ def login():
         # r = json.loads(r.data.decode('utf-8'))
         # pairs = http.request('GET','https://api.simpleswap.io/v1/get_all_pairs?api_key={}&fixed='.format(API_KEY))
         # pairs = json.loads(pairs.data.decode('utf-8'))
-        print(time.time()-a,file=sys.stderr)
         depositCurrency = []
         tmp = pairs.keys()
         tmp = list(tmp)
@@ -101,7 +97,6 @@ def login():
         # print(len(tmp),tmp,file=sys.stderr)
         name = ''
         image = ''
-        a = time.time()
         for i in tmp:
             # t = {}
             # t['symbol'] = i['symbol']
@@ -111,7 +106,6 @@ def login():
                     name = j["name"]
                     image = "https://simpleswap.io"+j["image"]
             depositCurrency.append({'symbol':i,'name':name,'image':image})
-        print(time.time()-a,file=sys.stderr)
         return jsonify(depositCurrency)
         # return render_template("login.html",depositCurrency=depositCurrency)
 
