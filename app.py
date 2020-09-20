@@ -8,22 +8,49 @@ from timeloop import Timeloop
 from datetime import timedelta
 import re
 from flask_cors import CORS, cross_origin
+import _thread
 
 app = Flask(__name__)
 CORS(app)
 
 API_KEY = 'b72d5b0f-9505-4063-9104-5d7a1c314562'
 pairs = None
+fixedpairs = None
 allCurrencies = None
 
-tl = Timeloop()
+def test1():
+    global pairs
+    session = requests.Session()
+    session.trust_env = False
+    pairs = session.get('https://api.simpleswap.io/v1/get_all_pairs?api_key={}&fixed='.format(API_KEY)).json()
+    print(1,file=sys.stderr)
 
-@tl.job(interval=timedelta(seconds=3600))
-def sample_job():
+def test2():
+    global fixedpairs
+    session = requests.Session()
+    session.trust_env = False
+    fixedpairs = session.get('https://api.simpleswap.io/v1/get_all_pairs?api_key={}&fixed=true'.format(API_KEY)).json()
+    print(2,file=sys.stderr)
+
+def test3():
     global allCurrencies
     session = requests.Session()
     session.trust_env = False
     allCurrencies = session.get('https://api.simpleswap.io/v1/get_all_currencies?api_key='+API_KEY).json()
+    print(3,file=sys.stderr)
+
+_thread.start_new_thread(test3,())
+_thread.start_new_thread(test2,())
+_thread.start_new_thread(test1,())
+
+tl = Timeloop()
+
+@tl.job(interval=timedelta(seconds=10))
+def sample_job():
+    _thread.start_new_thread(test3,())
+    _thread.start_new_thread(test2,())
+    _thread.start_new_thread(test1,())
+    print(0,file=sys.stderr)
 
 @app.route("/")
 def home():
@@ -47,12 +74,19 @@ def login():
             return redirect(url_for("exchange", id=id))
     else:
         global pairs
+        global fixedpairs
         global allCurrencies
+
         a = time.time()
         session = requests.Session()
         session.trust_env = False
-        allCurrencies = session.get('https://api.simpleswap.io/v1/get_all_currencies?api_key='+API_KEY).json()
-        pairs = session.get('https://api.simpleswap.io/v1/get_all_pairs?api_key={}&fixed='.format(API_KEY)).json()
+        if(allCurrencies is None):
+            allCurrencies = session.get('https://api.simpleswap.io/v1/get_all_currencies?api_key='+API_KEY).json()
+        if(pairs is None):
+            pairs = session.get('https://api.simpleswap.io/v1/get_all_pairs?api_key={}&fixed='.format(API_KEY)).json()
+        if(fixedpairs is None):
+            fixedpairs = session.get('https://api.simpleswap.io/v1/get_all_pairs?api_key={}&fixed=true'.format(API_KEY)).json()
+
         # http = urllib3.PoolManager()
         # r = http.request('GET','https://api.simpleswap.io/v1/get_all_currencies?api_key='+API_KEY)
         # r = json.loads(r.data.decode('utf-8'))
@@ -133,15 +167,23 @@ def exchange():
 @app.route('/currencypair')
 def currencyPair():
     symbol = request.args.get('symbol',default=0)
+    fixed = request.args.get('fixed',default=0)
     # a = requests.get('https://api.simpleswap.io/v1/get_pairs?api_key={}&fixed=&symbol={}'.format(API_KEY,symbol)).json()
     # print(symbol,file=sys.stderr)
     # print(r,file=sys.stderr)
+    if(0 in (symbol,fixed)):
+        return jsonify({'error': 'incomplete input'})
     global pairs
     global allCurrencies
-    if(pairs is None or allCurrencies is None):
+    if(pairs is None or allCurrencies is None or fixedpairs is None):
         return jsonify({"error": "empty pairs or allCurrencies"})
     print(allCurrencies,file=sys.stderr)
-    a = pairs[symbol]
+    if(fixed=='true' or fixed=='True' or fixed==True):
+        a= fixedpairs.get(symbol)
+    else:
+        a = pairs.get(symbol)
+    if(a is None):
+        return jsonify({'error': 'Empty response'})
     a.sort()
     print(len(a),a,file=sys.stderr)
     r = []
@@ -260,6 +302,12 @@ def getMinMax():
     r = {'min': min,'max': max}
     print(r,file=sys.stderr)
     return jsonify(r)
+
+
+@app.route('/dummy')
+def dummy():
+    a = {"address_from":"34NjfWgoeH41M4MNdmi8LdSsRMG9qTcDpY","address_to":"GBH4TZYZ4IRCPO44CBOLFUHULU2WGALXTAVESQA6432MBJMABBB4GIYI","amount_from":"1","amount_to":"125258.30224260","currency_from":"btc","currency_to":"xlm","expected_amount":"1","extra_id_from":None,"extra_id_to":"abcd","id":"LKuAYqAUwMM","status":"finished","timestamp":"2020-09-13T19:23:24.767Z","tx_from":"input hash example","tx_to":"output hash example","type":"floating","updated_at":"2020-09-14T19:24:18.247Z"}
+    return a
 
 if __name__ == "__main__":
     tl.start()
