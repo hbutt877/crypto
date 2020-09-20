@@ -76,6 +76,7 @@ def login():
         global pairs
         global fixedpairs
         global allCurrencies
+        import time
 
         a = time.time()
         session = requests.Session()
@@ -312,12 +313,11 @@ def getMinMax():
 @app.route('/gettime',methods=["POST"])
 def time():
     data = request.get_json(force=True)
-    print(data,file=sys.stderr)
     usertime = data.get("time")
-    time = datetime.datetime.strptime(usertime, '%Y-%m-%dT%H:%M:%S.%fZ')
+    timethen = datetime.datetime.strptime(usertime, '%Y-%m-%dT%H:%M:%S.%fZ')
     timenowstring = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
     timenow = datetime.datetime.strptime(timenowstring, '%Y-%m-%dT%H:%M:%S.%fZ')
-    c = timenow - time
+    c = timenow - timethen
     if(c.total_seconds()>(20*60)):
         return ({"seconds":-1})
     else:
