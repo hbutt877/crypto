@@ -310,9 +310,9 @@ def time():
     timenow = datetime.datetime.strptime(timenowstring, '%Y-%m-%dT%H:%M:%S.%fZ')
     c = timenow - timethen
     if(c.total_seconds()>(20*60)):
-        return (-1)
+        return jsonify(-1)
     else:
-        return ((20*60) - int(c.total_seconds()))
+        return jsonify((20*60) - int(c.total_seconds()))
 
 if __name__ == "__main__":
     tl.start()
