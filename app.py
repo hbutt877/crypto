@@ -23,21 +23,18 @@ def test1():
     session = requests.Session()
     session.trust_env = False
     pairs = session.get('https://api.simpleswap.io/v1/get_all_pairs?api_key={}&fixed='.format(API_KEY)).json()
-    print(1,file=sys.stderr)
 
 def test2():
     global fixedpairs
     session = requests.Session()
     session.trust_env = False
     fixedpairs = session.get('https://api.simpleswap.io/v1/get_all_pairs?api_key={}&fixed=true'.format(API_KEY)).json()
-    print(2,file=sys.stderr)
 
 def test3():
     global allCurrencies
     session = requests.Session()
     session.trust_env = False
     allCurrencies = session.get('https://api.simpleswap.io/v1/get_all_currencies?api_key='+API_KEY).json()
-    print(3,file=sys.stderr)
 
 _thread.start_new_thread(test3,())
 _thread.start_new_thread(test2,())
@@ -313,9 +310,9 @@ def time():
     timenow = datetime.datetime.strptime(timenowstring, '%Y-%m-%dT%H:%M:%S.%fZ')
     c = timenow - timethen
     if(c.total_seconds()>(20*60)):
-        return ({"seconds":-1})
+        return (-1)
     else:
-        return ({"seconds":(20*60) - int(c.total_seconds())})
+        return ((20*60) - int(c.total_seconds()))
 
 if __name__ == "__main__":
     tl.start()
