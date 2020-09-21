@@ -106,6 +106,83 @@ def login():
         return jsonify(depositCurrency)
         # return render_template("login.html",depositCurrency=depositCurrency)
 
+@app.route('/getcurrencies')
+def getCurrencies():
+    fixed = request.args.get('fixed',default=0)
+    if(fixed==0):
+        return jsonify({'error': 'incomplete input'})
+    keys = None
+    if(fixed=="true" or fixed == True or fixed=="True"):
+        keys = list(fixedpairs.keys())
+    else:
+        keys = list(pairs.keys())
+    r = []
+    for i in keys:
+        for j in allCurrencies:
+            if(j["symbol"] == i):
+                name = j["name"]
+                image = "https://simpleswap.io"+j["image"]
+                has_extra_id = j["has_extra_id"]
+                extra_id = j["extra_id"]
+        r.append({'name':name,'symbol':i,'image':image,"has_extra_id":has_extra_id,"extra_id":extra_id})
+    return jsonify(r)
+
+@app.route('/validatepair')
+def validatepair():
+    depositCurrency = request.args.get('depositcurrency',default=0)
+    receiveCurrency = request.args.get('receivecurrency',default=0)
+    fixed = request.args.get('fixed',default=0)
+    if(0 in (depositCurrency,receiveCurrency,fixed)):
+        return jsonify({'error': 'incomplete input'})
+    if(fixed=="true" or fixed == True or fixed=="True"):
+        values = fixedpairs.get(depositCurrency)
+    else:
+        values = pairs.get(depositCurrency)
+    if(values is None):
+        return jsonify({'error': 'Empty response'})
+    if(receiveCurrency in values):
+        return jsonify(True)
+    else:
+        return jsonify(False)
+
+@app.route('/currencypair')
+def currencyPair():
+    symbol = request.args.get('symbol',default=0)
+    fixed = request.args.get('fixed',default=0)
+    # a = requests.get('https://api.simpleswap.io/v1/get_pairs?api_key={}&fixed=&symbol={}'.format(API_KEY,symbol)).json()
+    # print(symbol,file=sys.stderr)
+    # print(r,file=sys.stderr)
+    if(0 in (symbol,fixed)):
+        return jsonify({'error': 'incomplete input'})
+    global pairs
+    global allCurrencies
+    if(pairs is None or allCurrencies is None or fixedpairs is None):
+        return jsonify({"error": "empty pairs or allCurrencies"})
+    print(allCurrencies,file=sys.stderr)
+    if(fixed=='true' or fixed=='True' or fixed==True):
+        a= fixedpairs.get(symbol)
+    else:
+        a = pairs.get(symbol)
+    if(a is None):
+        return jsonify({'error': 'Empty response'})
+    a.sort()
+    print(len(a),a,file=sys.stderr)
+    r = []
+    name = ''
+    image = ''
+    has_extra_id = ''
+    extra_id = ''
+    for i in a:
+        for j in allCurrencies:
+            if(j["symbol"] == i):
+                name = j["name"]
+                image = "https://simpleswap.io"+j["image"]
+                has_extra_id = j["has_extra_id"]
+                extra_id = j["extra_id"]
+        r.append({'name':name,'symbol':i,'image':image,"has_extra_id":has_extra_id,"extra_id":extra_id})
+    return jsonify(r)
+
+
 @app.route("/createexchange", methods=["POST"])
 def createexchange():
     data = request.get_json(force=True)
@@ -156,48 +233,7 @@ def getexchange():
         return jsonify({'error': 'may be invalid id'})
     return a
 
-@app.route("/exchange")
-def exchange():
-    r = request.args.get('id',0)
-    print(r,file=sys.stderr)
-    return "id = " + r
 
-@app.route('/currencypair')
-def currencyPair():
-    symbol = request.args.get('symbol',default=0)
-    fixed = request.args.get('fixed',default=0)
-    # a = requests.get('https://api.simpleswap.io/v1/get_pairs?api_key={}&fixed=&symbol={}'.format(API_KEY,symbol)).json()
-    # print(symbol,file=sys.stderr)
-    # print(r,file=sys.stderr)
-    if(0 in (symbol,fixed)):
-        return jsonify({'error': 'incomplete input'})
-    global pairs
-    global allCurrencies
-    if(pairs is None or allCurrencies is None or fixedpairs is None):
-        return jsonify({"error": "empty pairs or allCurrencies"})
-    print(allCurrencies,file=sys.stderr)
-    if(fixed=='true' or fixed=='True' or fixed==True):
-        a= fixedpairs.get(symbol)
-    else:
-        a = pairs.get(symbol)
-    if(a is None):
-        return jsonify({'error': 'Empty response'})
-    a.sort()
-    print(len(a),a,file=sys.stderr)
-    r = []
-    name = ''
-    image = ''
-    has_extra_id = ''
-    extra_id = ''
-    for i in a:
-        for j in allCurrencies:
-            if(j["symbol"] == i):
-                name = j["name"]
-                image = "https://simpleswap.io"+j["image"]
-                has_extra_id = j["has_extra_id"]
-                extra_id = j["extra_id"]
-        r.append({'name':name,'symbol':i,'image':image,"has_extra_id":has_extra_id,"extra_id":extra_id})
-    return jsonify(r)
 
 @app.route('/getrate')
 def getRate():
