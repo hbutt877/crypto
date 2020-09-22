@@ -180,6 +180,10 @@ def currencyPair():
                 has_extra_id = j["has_extra_id"]
                 extra_id = j["extra_id"]
         r.append({'name':name,'symbol':i,'image':image,"has_extra_id":has_extra_id,"extra_id":extra_id})
+    if(fixed=='true' or fixed=='True' or fixed==True):
+        for i in r:
+            if(i.get("symbol") == symbol):
+                r.remove(i)
     return jsonify(r)
 
 
