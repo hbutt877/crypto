@@ -310,7 +310,7 @@ def validateid():
     id = data.get("id")
     if(id is None):
         return {"valid": False}
-        
+
     id = re.sub('^[ ]*','',id)
     id = re.sub('[ ]*$','',id)
     if(len(id)<5 or len(id)>20):
@@ -318,8 +318,13 @@ def validateid():
 
     if(re.search("^[a-zA-Z0-9]*$",id) is None):
         return {"valid":False}
-    else:
+    session = requests.Session()
+    session.trust_env = False
+    a = session.get('https://api.simpleswap.io/v1/get_exchange?api_key={}&id={}'.format(API_KEY,id))
+    if(a.status_code<400 and a.status_code>=200):
         return {"valid": True}
+    else:
+        return {"valid": False}
 
 @app.route('/getminmax')
 def getMinMax():
