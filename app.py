@@ -304,6 +304,23 @@ def validateextra():
     else:
         return {"valid": True}
 
+@app.route('/validateid', methods=["POST"])
+def validateid():
+    data = request.get_json(force=True)
+    id = data.get("id")
+    if(id is None):
+        return {"valid": False}
+        
+    id = re.sub('^[ ]*','',id)
+    id = re.sub('[ ]*$','',id)
+    if(len(id)<5 or len(id)>20):
+        return {"valid": False}
+
+    if(re.search("^[a-zA-Z0-9]*$",id) is None):
+        return {"valid":False}
+    else:
+        return {"valid": True}
+
 @app.route('/getminmax')
 def getMinMax():
     deposit = request.args.get('deposit',default=0)
