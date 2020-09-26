@@ -367,6 +367,8 @@ def getMinMax():
 def time():
     data = request.get_json(force=True)
     usertime = data.get("time")
+    if(usertime is None):
+        return jsonify({'error': 'Empty response'})
     timethen = datetime.datetime.strptime(usertime, '%Y-%m-%dT%H:%M:%S.%fZ')
     timenowstring = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
     timenow = datetime.datetime.strptime(timenowstring, '%Y-%m-%dT%H:%M:%S.%fZ')
