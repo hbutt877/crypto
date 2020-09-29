@@ -16,7 +16,7 @@ import _thread
 
 app = Flask(__name__)
 api = Api(app)
-CORS(app)
+CORS(app,resources={r"/*":{"origins":"*"}})
 
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
@@ -420,4 +420,4 @@ def time():
 
 if __name__ == "__main__":
     tl.start()
-    app.run(debug=False)
+    app.run()
