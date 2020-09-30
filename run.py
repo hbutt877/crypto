@@ -91,69 +91,67 @@ def sample_job():
     _thread.start_new_thread(test1,())
     print(0,file=sys.stderr)
 
-@app.route("/")
+# @app.route("/")
 # def home():
 #     return redirect(url_for('login'))
-#
-# @app.route("/login", methods=["POST", "GET"])
+
+@app.route("/login", methods=["GET"])
+@jwt_required
 
 def login():
-    if request.method == "POST":
-        amount = request.form["amount"]
-        address=request.form["address"]
-        depositCurrency = request.form['depositCurrency']
-        receiveCurrency = request.form['receiveCurrency']
-        print(depositCurrency,receiveCurrency,file=sys.stderr)
-        # new_amount = requests.get('https://api.simpleswap.io/v1/get_estimated?api_key=b72d5b0f-9505-4063-9104-5d7a1c314562&fixed=false&currency_from=btc&currency_to=eth&amount='+amount).text
-        r = requests.post('https://api.simpleswap.io/v1/create_exchange?api_key='+API_KEY,json={"fixed": "", "currency_from":depositCurrency,"currency_to":receiveCurrency,"address_to":address,"amount":amount}).json()
-        if('code' in r):
-            if(r['code']==400):
-                return redirect(url_for("exchange", id="Address not valid"))
-        else:
-            id = r['id']
-            return redirect(url_for("exchange", id=id))
-    else:
-        global pairs
-        global fixedpairs
-        global allCurrencies
-        session = requests.Session()
-        session.trust_env = False
-        if(allCurrencies is None):
-            allCurrencies = session.get('https://api.simpleswap.io/v1/get_all_currencies?api_key='+API_KEY).json()
-        if(pairs is None):
-            pairs = session.get('https://api.simpleswap.io/v1/get_all_pairs?api_key={}&fixed='.format(API_KEY)).json()
-        if(fixedpairs is None):
-            fixedpairs = session.get('https://api.simpleswap.io/v1/get_all_pairs?api_key={}&fixed=true'.format(API_KEY)).json()
+    global pairs
+    global fixedpairs
+    global allCurrencies
+    session = requests.Session()
+    session.trust_env = False
+    if(allCurrencies is None):
+        allCurrencies = session.get('https://api.simpleswap.io/v1/get_all_currencies?api_key='+API_KEY).json()
+    if(pairs is None):
+        pairs = session.get('https://api.simpleswap.io/v1/get_all_pairs?api_key={}&fixed='.format(API_KEY)).json()
+    if(fixedpairs is None):
+        fixedpairs = session.get('https://api.simpleswap.io/v1/get_all_pairs?api_key={}&fixed=true'.format(API_KEY)).json()
 
-        # http = urllib3.PoolManager()
-        # r = http.request('GET','https://api.simpleswap.io/v1/get_all_currencies?api_key='+API_KEY)
-        # r = json.loads(r.data.decode('utf-8'))
-        # pairs = http.request('GET','https://api.simpleswap.io/v1/get_all_pairs?api_key={}&fixed='.format(API_KEY))
-        # pairs = json.loads(pairs.data.decode('utf-8'))
-        depositCurrency = []
-        tmp = pairs.keys()
-        tmp = list(tmp)
-        tmp.sort()
-        # print(len(tmp),tmp,file=sys.stderr)
-        name = ''
-        image = ''
-        for i in tmp:
-            # t = {}
-            # t['symbol'] = i['symbol']
-            # t['name'] = i['name']
-            for j in allCurrencies:
-                if(j["symbol"] == i):
-                    name = j["name"]
-                    image = "https://simpleswap.io"+j["image"]
-            depositCurrency.append({'symbol':i,'name':name,'image':image})
-        return jsonify(depositCurrency)
-        # return render_template("login.html",depositCurrency=depositCurrency)
+    # http = urllib3.PoolManager()
+    # r = http.request('GET','https://api.simpleswap.io/v1/get_all_currencies?api_key='+API_KEY)
+    # r = json.loads(r.data.decode('utf-8'))
+    # pairs = http.request('GET','https://api.simpleswap.io/v1/get_all_pairs?api_key={}&fixed='.format(API_KEY))
+    # pairs = json.loads(pairs.data.decode('utf-8'))
+    depositCurrency = []
+    tmp = pairs.keys()
+    tmp = list(tmp)
+    tmp.sort()
+    # print(len(tmp),tmp,file=sys.stderr)
+    name = ''
+    image = ''
+    for i in tmp:
+        # t = {}
+        # t['symbol'] = i['symbol']
+        # t['name'] = i['name']
+        for j in allCurrencies:
+            if(j["symbol"] == i):
+                name = j["name"]
+                image = "https://simpleswap.io"+j["image"]
+        depositCurrency.append({'symbol':i,'name':name,'image':image})
+    return jsonify(depositCurrency)
+    # return render_template("login.html",depositCurrency=depositCurrency)
 
 @app.route('/getcurrencies')
 def getCurrencies():
+    global pairs
+    global fixedpairs
+    global allCurrencies
+
     fixed = request.args.get('fixed',default=0)
     if(fixed==0):
         return jsonify({'error': 'incomplete input'})
+    session = requests.Session()
+    session.trust_env = False
+    if(allCurrencies is None):
+        allCurrencies = session.get('https://api.simpleswap.io/v1/get_all_currencies?api_key='+API_KEY).json()
+    if(pairs is None):
+        pairs = session.get('https://api.simpleswap.io/v1/get_all_pairs?api_key={}&fixed='.format(API_KEY)).json()
+    if(fixedpairs is None):
+        fixedpairs = session.get('https://api.simpleswap.io/v1/get_all_pairs?api_key={}&fixed=true'.format(API_KEY)).json()
     keys = None
     if(fixed=="true" or fixed == True or fixed=="True"):
         keys = list(fixedpairs.keys())
@@ -229,8 +227,8 @@ def currencyPair():
                 r.remove(i)
     return jsonify(r)
 
-@jwt_required
 @app.route("/createexchange", methods=["POST"])
+@jwt_required
 def createexchange():
     data = request.get_json(force=True)
     print(data,file=sys.stderr)
@@ -258,8 +256,8 @@ def createexchange():
         return jsonify({'id':-1})
 
 
+@app.route('/getexchange', methods=["GET"])
 @jwt_required
-@app.route('/getexchange')
 def getexchange():
     id = request.args.get('id',default=0)
     if(id==0):
