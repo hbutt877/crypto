@@ -126,3 +126,29 @@ class GetExchangeResource(Resource):
         else:
             return jsonify({'error': 'may be invalid id'})
         return a
+
+class CreateExchangeResource(Resource):
+    @jwt_required
+    def post(self):
+        data = request.get_json(force=True)
+        amount = data.get("amount")
+        address= data.get("address")
+        depositCurrency = data.get('depositcurrency')
+        receiveCurrency = data.get('receivecurrency')
+        extraid = data.get('extraid')
+        fixed = data.get('fixed')
+        if(fixed=="true" or fixed=="True" or fixed is True):
+            fixed = "true"
+        else:
+            fixed = ""
+
+        # new_amount = requests.get('https://api.simpleswap.io/v1/get_estimated?api_key=b72d5b0f-9505-4063-9104-5d7a1c314562&fixed=false&currency_from=btc&currency_to=eth&amount='+amount).text
+        if(extraid=='' or extraid is None):
+            r = requests.post('https://api.simpleswap.io/v1/create_exchange?api_key='+API_KEY,json={"fixed": fixed, "currency_from":depositCurrency,"currency_to":receiveCurrency,"address_to":address,"amount":amount})
+        else:
+            r = requests.post('https://api.simpleswap.io/v1/create_exchange?api_key='+API_KEY,json={"fixed": fixed, "currency_from":depositCurrency,"currency_to":receiveCurrency,"address_to":address,"amount":amount,'extra_id_to':extraid})
+        if(r.status_code<400 and r.status_code>=200):
+            id = r.json()['id']
+            return jsonify({'id': id})
+        else:
+            return jsonify({'id':-1})
