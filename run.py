@@ -51,6 +51,9 @@ api.add_resource(resources.UserLogoutRefresh, '/logout/refresh')
 api.add_resource(resources.TokenRefresh, '/token/refresh')
 api.add_resource(resources.AllUsers, '/users')
 api.add_resource(resources.SecretResource, '/secret')
+api.add_resource(resources.GetExchangeResource, '/getexchange')
+
+
 
 
 
@@ -230,8 +233,9 @@ def currencyPair():
 @app.route("/createexchange", methods=["POST"])
 @jwt_required
 def createexchange():
+
     data = request.get_json(force=True)
-    print(data,file=sys.stderr)
+    print(1,data,file=sys.stderr)
     amount = data.get("amount")
     address= data.get("address")
     depositCurrency = data.get('depositcurrency')
@@ -256,27 +260,27 @@ def createexchange():
         return jsonify({'id':-1})
 
 
-@app.route('/getexchange', methods=["GET"])
-@jwt_required
-def getexchange():
-    id = request.args.get('id',default=0)
-    if(id==0):
-        return jsonify({'error': 'invalid id'})
-#Remove dummy before deployment
-#Remove dummy before deployment
-#Remove dummy before deployment
-    if(id=="dummy"):
-        a = {"address_from":"34NjfWgoeH41M4MNdmi8LdSsRMG9qTcDpY","address_to":"GBH4TZYZ4IRCPO44CBOLFUHULU2WGALXTAVESQA6432MBJMABBB4GIYI","amount_from":"1","amount_to":"125258.30224260","currency_from":"btc","currency_to":"xlm","expected_amount":"1","extra_id_from":None,"extra_id_to":"abcd","id":"LKuAYqAUwMM","status":"finished","timestamp":"2020-09-13T19:23:24.767Z","tx_from":"input hash example","tx_to":"output hash example","type":"floating","updated_at":"2020-09-14T19:24:18.247Z"}
-        return jsonify(a)
-    session = requests.Session()
-    session.trust_env = False
-    a = session.get('https://api.simpleswap.io/v1/get_exchange?api_key={}&id={}'.format(API_KEY,id))
-    if(a.status_code<400 and a.status_code>=200):
-        a = a.json()
-        a.pop('currencies', None)
-    else:
-        return jsonify({'error': 'may be invalid id'})
-    return a
+# @app.route('/getexchange', methods=["GET"])
+# @jwt_required
+# def getexchange():
+#     id = request.args.get('id',default=0)
+#     if(id==0):
+#         return jsonify({'error': 'invalid id'})
+# #Remove dummy before deployment
+# #Remove dummy before deployment
+# #Remove dummy before deployment
+#     if(id=="dummy"):
+#         a = {"address_from":"34NjfWgoeH41M4MNdmi8LdSsRMG9qTcDpY","address_to":"GBH4TZYZ4IRCPO44CBOLFUHULU2WGALXTAVESQA6432MBJMABBB4GIYI","amount_from":"1","amount_to":"125258.30224260","currency_from":"btc","currency_to":"xlm","expected_amount":"1","extra_id_from":None,"extra_id_to":"abcd","id":"LKuAYqAUwMM","status":"finished","timestamp":"2020-09-13T19:23:24.767Z","tx_from":"input hash example","tx_to":"output hash example","type":"floating","updated_at":"2020-09-14T19:24:18.247Z"}
+#         return jsonify(a)
+#     session = requests.Session()
+#     session.trust_env = False
+#     a = session.get('https://api.simpleswap.io/v1/get_exchange?api_key={}&id={}'.format(API_KEY,id))
+#     if(a.status_code<400 and a.status_code>=200):
+#         a = a.json()
+#         a.pop('currencies', None)
+#     else:
+#         return jsonify({'error': 'may be invalid id'})
+#     return a
 
 
 
