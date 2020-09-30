@@ -13,6 +13,8 @@ import datetime
 import re
 from flask_cors import CORS, cross_origin
 import _thread
+from flask_jwt_extended import (create_access_token, create_refresh_token, jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt)
+
 
 app = Flask(__name__)
 api = Api(app)
@@ -90,10 +92,11 @@ def sample_job():
     print(0,file=sys.stderr)
 
 @app.route("/")
-def home():
-    return redirect(url_for('login'))
+# def home():
+#     return redirect(url_for('login'))
+#
+# @app.route("/login", methods=["POST", "GET"])
 
-@app.route("/login", methods=["POST", "GET"])
 def login():
     if request.method == "POST":
         amount = request.form["amount"]
@@ -226,7 +229,7 @@ def currencyPair():
                 r.remove(i)
     return jsonify(r)
 
-
+@jwt_required
 @app.route("/createexchange", methods=["POST"])
 def createexchange():
     data = request.get_json(force=True)
@@ -255,7 +258,7 @@ def createexchange():
         return jsonify({'id':-1})
 
 
-
+@jwt_required
 @app.route('/getexchange')
 def getexchange():
     id = request.args.get('id',default=0)

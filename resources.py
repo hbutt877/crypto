@@ -1,6 +1,7 @@
 from flask_restful import Resource, reqparse
 from models import UserModel, RevokedTokenModel
 from flask_jwt_extended import (create_access_token, create_refresh_token, jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt)
+import re
 
 parser = reqparse.RequestParser()
 parser.add_argument('username', help = 'This field cannot be blank', required = True)
@@ -21,13 +22,14 @@ class UserRegistration(Resource):
 
         try:
             new_user.save_to_db()
-            access_token = create_access_token(identity = data['username'])
-            refresh_token = create_refresh_token(identity = data['username'])
-            return {
-                'message': 'User {} was created'.format(data['username']),
-                'access_token': access_token,
-                'refresh_token': refresh_token
-                }
+            # access_token = create_access_token(identity = data['username'])
+            # refresh_token = create_refresh_token(identity = data['username'])
+            # return {
+            #     'message': 'User {} was created'.format(data['username']),
+            #     'access_token': access_token,
+            #     'refresh_token': refresh_token
+            #     }
+            return {'message': 'user created'}
         except:
             return {'message': 'Something went wrong'}, 500
 
@@ -43,10 +45,11 @@ class UserLogin(Resource):
         if UserModel.verify_hash(data['password'], current_user.password):
             access_token = create_access_token(identity = data['username'])
             refresh_token = create_refresh_token(identity = data['username'])
+            tmp = access_token[-50:] + access_token[:len(access_token)-50]
+            # tmp2 = tmp[50:] + tmp[:50]
             return {
                 'message': 'Logged in as {}'.format(current_user.username),
-                'access_token': access_token,
-                'refresh_token': refresh_token
+                'access_token': access_token
                 }
         else:
             return {'message': 'Wrong credentials'}
