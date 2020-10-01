@@ -53,6 +53,8 @@ api.add_resource(resources.AllUsers, '/users')
 api.add_resource(resources.SecretResource, '/secret')
 api.add_resource(resources.GetExchangeResource, '/getexchange')
 api.add_resource(resources.CreateExchangeResource, '/createexchange')
+api.add_resource(resources.AddExchangeResource, '/addexchange')
+api.add_resource(resources.GetUserExchangeResource, '/getuserexchange')
 
 
 

@@ -1,5 +1,5 @@
 from flask_restful import Resource, reqparse
-from models import UserModel, RevokedTokenModel
+from models import UserModel, RevokedTokenModel,ExchangeModel
 from flask_jwt_extended import (create_access_token, create_refresh_token, jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt)
 import re
 from flask import request,jsonify
@@ -49,8 +49,19 @@ class UserLogin(Resource):
             access_token = create_access_token(identity = data['username'])
             refresh_token = create_refresh_token(identity = data['username'])
             l = len(access_token)
-            tmp = access_token[:200] + access_token[230:273] + access_token[200:230]
-            tmp2 = tmp[:200] + tmp[-30:]+ tmp[230:]
+            print(access_token)
+            bytes_token = list(bytes(access_token[-10:],'utf-8'))
+            for i in range(len(bytes_token)):
+              bytes_token[i] = bytes_token[i] + 7
+            b = "".join(map(chr, bytes_token))
+            access_token2 = access_token[:l-10] + b
+            tmp = access_token2[:200] + access_token2[230:] + access_token2[200:230]
+            # tmp2 = tmp[:200] + tmp[-30:]+ tmp[200:(l-30)]
+            # bytes_token = list(bytes(access_token[-10:],'utf-8'))
+            # for i in range(len(bytes_token)):
+            #   bytes_token[i] = bytes_token[i] - 7
+            # b = "".join(map(chr, bytes_token))
+            # access_token3 = access_token[:l-10] + b
             return {
                 'message': 'Logged in as {}'.format(current_user.username),
                 'access_token': access_token
@@ -93,7 +104,20 @@ class TokenRefresh(Resource):
 
 class AllUsers(Resource):
     def get(self):
-        return UserModel.return_all()
+        id = UserModel.find_by_username("b").id
+
+        # exchange = ExchangeModel(
+        #     userid = id,
+        #     exchangeid = "zJT6d2mHDyV"
+        # )
+        # exchange.save_to_db()
+
+        print(id)
+        exchanges = ExchangeModel.find_by_userid(id)
+        print(exchanges)
+        for i in exchanges:
+            print(i.id,i.userid,i.exchangeid)
+        # return UserModel.return_all()
 
     def delete(self):
         return UserModel.delete_all()
@@ -152,3 +176,43 @@ class CreateExchangeResource(Resource):
             return jsonify({'id': id})
         else:
             return jsonify({'id':-1})
+class AddExchangeResource(Resource):
+    @jwt_required
+    def post(self):
+        data = request.get_json(force=True)
+        username = data.get("username")
+        exchangeid = data.get("exchangeid")
+        if(username is None or exchangeid is None):
+            return jsonify({'error': 'Empty input'})
+        id = UserModel.find_by_username(username).id
+        if(id is None):
+            return jsonify({'error': 'Username not found'})
+        exchange = ExchangeModel(
+            userid = id,
+            exchangeid = exchangeid
+        )
+        try:
+            exchange.save_to_db()
+            return jsonify({'success':'saved successfully'})
+        except Exception as e:
+            print(e)
+            return jsonify({'error': 'Unable to save exchangeid to database'})
+class GetUserExchangeResource(Resource):
+    @jwt_required
+    def post(self):
+        data = request.get_json(force=True)
+        username = data.get("username")
+        if(username is None):
+            return jsonify({'error': 'Empty input'})
+        exchangeid = UserModel.find_by_username(username).id
+        if(exchangeid is None):
+            return jsonify({'error': 'Username not found'})
+        try:
+            exchanges = ExchangeModel.find_by_userid(exchangeid)
+            list_exchanges = []
+            for i in exchanges:
+                list_exchanges.append(i.exchangeid)
+            return jsonify({'exchanges': list_exchanges})
+        except Exception as e:
+            print(e)
+            return jsonify({'error': 'Unable to retrieve exchanges'})

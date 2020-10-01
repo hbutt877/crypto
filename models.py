@@ -42,6 +42,22 @@ class UserModel(db.Model):
     def verify_hash(password, hash):
         return sha256.verify(password, hash)
 
+class ExchangeModel(db.Model):
+    __tablename__ = 'exchanges'
+    id = db.Column(db.Integer, primary_key = True)
+    userid = db.Column(db.Integer)
+    exchangeid = db.Column(db.String(50))
+
+    def save_to_db(self):
+        db.session.add(self)
+        db.session.commit()
+    @classmethod
+    def find_by_userid(cls, userid):
+        print(type(userid))
+        return cls.query.filter_by(userid = userid).all()
+
+
+
 class RevokedTokenModel(db.Model):
     __tablename__ = 'revoked_tokens'
     id = db.Column(db.Integer, primary_key = True)
