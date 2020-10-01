@@ -64,6 +64,7 @@ class UserLogin(Resource):
             # access_token3 = access_token[:l-10] + b
             return {
                 'message': 'Logged in as {}'.format(current_user.username),
+                'username' : current_user.username,
                 'access_token': access_token
                 }
         else:
