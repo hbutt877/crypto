@@ -4,11 +4,16 @@ from flask_jwt_extended import (create_access_token, create_refresh_token, jwt_r
 import re
 from flask import request,jsonify
 import requests
+from flask_mail import Mail, Message
+from itsdangerous import URLSafeTimedSerializer, SignatureExpired,BadTimeSignature
+
 API_KEY = 'b72d5b0f-9505-4063-9104-5d7a1c314562'
 
 parser = reqparse.RequestParser()
 parser.add_argument('username', help = 'This field cannot be blank', required = True)
 parser.add_argument('password', help = 'This field cannot be blank', required = True)
+
+s = URLSafeTimedSerializer('Thisisasecret!')
 
 
 class UserRegistration(Resource):
@@ -20,6 +25,7 @@ class UserRegistration(Resource):
 
         new_user = UserModel(
             username = data['username'],
+            isverified = False,
             password = UserModel.generate_hash(data['password'])
         )
 
@@ -44,7 +50,9 @@ class UserLogin(Resource):
 
         if not current_user:
             return {'message': 'User {} doesn\'t exist'.format(data['username'])}
-
+        else:
+            if(current_user.isverified is False):
+                return {'error': 'Not verified'}
         if UserModel.verify_hash(data['password'], current_user.password):
             access_token = create_access_token(identity = data['username'])
             refresh_token = create_refresh_token(identity = data['username'])
@@ -217,3 +225,24 @@ class GetUserExchangeResource(Resource):
         except Exception as e:
             print(e)
             return jsonify({'error': 'Unable to retrieve exchanges'})
+class ConfirmEmailResource(Resource):
+    def get(self):
+        try:
+            token  = request.args.get('token',default=0)
+            if(token==0):
+                return {'error': 'Enter token'}
+            email = s.loads(token, salt='email-confirm', max_age=3600)
+            a = UserModel.find_by_username(email)
+            if(a.isverified is True):
+                return {'success': 'Already verified'}
+            UserModel.update_isverified(email)
+            # a = UserModel.find_by_username(email)
+            # print(a.isverified)
+            return {'success': email}
+        except SignatureExpired:
+            return {'error': 'Expired token'}
+        except BadTimeSignature:
+            return {'error': 'Wrong token'}
+        except Exception as e:
+            print(e)
+            return {'error': 'Unknown'}

@@ -14,11 +14,15 @@ import re
 from flask_cors import CORS, cross_origin
 import _thread
 from flask_jwt_extended import (create_access_token, create_refresh_token, jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt)
-
+from flask_mail import Mail, Message
+from itsdangerous import URLSafeTimedSerializer, SignatureExpired,BadTimeSignature
 
 app = Flask(__name__)
+app.config.from_pyfile('config.cfg')
+mail = Mail(app)
 api = Api(app)
 CORS(app,resources={r"/*":{"origins":"*"}})
+s = URLSafeTimedSerializer('Thisisasecret!')
 
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
@@ -55,6 +59,7 @@ api.add_resource(resources.GetExchangeResource, '/getexchange')
 api.add_resource(resources.CreateExchangeResource, '/createexchange')
 api.add_resource(resources.AddExchangeResource, '/addexchange')
 api.add_resource(resources.GetUserExchangeResource, '/getuserexchange')
+api.add_resource(resources.ConfirmEmailResource, '/confirmemail')
 
 
 
@@ -96,9 +101,6 @@ def sample_job():
     _thread.start_new_thread(test1,())
     print(0,file=sys.stderr)
 
-# @app.route("/")
-# def home():
-#     return redirect(url_for('login'))
 
 @app.route("/login", methods=["GET"])
 @jwt_required
@@ -116,35 +118,27 @@ def login():
     if(fixedpairs is None):
         fixedpairs = session.get('https://api.simpleswap.io/v1/get_all_pairs?api_key={}&fixed=true'.format(API_KEY)).json()
 
-    # http = urllib3.PoolManager()
-    # r = http.request('GET','https://api.simpleswap.io/v1/get_all_currencies?api_key='+API_KEY)
-    # r = json.loads(r.data.decode('utf-8'))
-    # pairs = http.request('GET','https://api.simpleswap.io/v1/get_all_pairs?api_key={}&fixed='.format(API_KEY))
-    # pairs = json.loads(pairs.data.decode('utf-8'))
     depositCurrency = []
     tmp = pairs.keys()
     tmp = list(tmp)
     tmp.sort()
-    # print(len(tmp),tmp,file=sys.stderr)
     name = ''
     image = ''
     for i in tmp:
-        # t = {}
-        # t['symbol'] = i['symbol']
-        # t['name'] = i['name']
         for j in allCurrencies:
             if(j["symbol"] == i):
                 name = j["name"]
                 image = "https://simpleswap.io"+j["image"]
         depositCurrency.append({'symbol':i,'name':name,'image':image})
     return jsonify(depositCurrency)
-    # return render_template("login.html",depositCurrency=depositCurrency)
 
 @app.route('/getcurrencies')
 def getCurrencies():
     global pairs
     global fixedpairs
     global allCurrencies
+
+
 
     fixed = request.args.get('fixed',default=0)
     if(fixed==0):
@@ -195,9 +189,6 @@ def validatepair():
 def currencyPair():
     symbol = request.args.get('symbol',default=0)
     fixed = request.args.get('fixed',default=0)
-    # a = requests.get('https://api.simpleswap.io/v1/get_pairs?api_key={}&fixed=&symbol={}'.format(API_KEY,symbol)).json()
-    # print(symbol,file=sys.stderr)
-    # print(r,file=sys.stderr)
     if(0 in (symbol,fixed)):
         return jsonify({'error': 'incomplete input'})
     global pairs
@@ -231,60 +222,6 @@ def currencyPair():
             if(i.get("symbol") == symbol):
                 r.remove(i)
     return jsonify(r)
-
-# @app.route("/createexchange", methods=["POST"])
-# @jwt_required
-# def createexchange():
-#
-#     data = request.get_json(force=True)
-#     print(1,data,file=sys.stderr)
-#     amount = data.get("amount")
-#     address= data.get("address")
-#     depositCurrency = data.get('depositcurrency')
-#     receiveCurrency = data.get('receivecurrency')
-#     extraid = data.get('extraid')
-#     fixed = data.get('fixed')
-#     if(fixed=="true" or fixed=="True" or fixed is True):
-#         fixed = "true"
-#     else:
-#         fixed = ""
-#
-#     # new_amount = requests.get('https://api.simpleswap.io/v1/get_estimated?api_key=b72d5b0f-9505-4063-9104-5d7a1c314562&fixed=false&currency_from=btc&currency_to=eth&amount='+amount).text
-#     if(extraid=='' or extraid is None):
-#         r = requests.post('https://api.simpleswap.io/v1/create_exchange?api_key='+API_KEY,json={"fixed": fixed, "currency_from":depositCurrency,"currency_to":receiveCurrency,"address_to":address,"amount":amount})
-#     else:
-#         r = requests.post('https://api.simpleswap.io/v1/create_exchange?api_key='+API_KEY,json={"fixed": fixed, "currency_from":depositCurrency,"currency_to":receiveCurrency,"address_to":address,"amount":amount,'extra_id_to':extraid})
-#     print(r.status_code,file=sys.stderr)
-#     if(r.status_code<400 and r.status_code>=200):
-#         id = r.json()['id']
-#         return jsonify({'id': id})
-#     else:
-#         return jsonify({'id':-1})
-
-
-# @app.route('/getexchange', methods=["GET"])
-# @jwt_required
-# def getexchange():
-#     id = request.args.get('id',default=0)
-#     if(id==0):
-#         return jsonify({'error': 'invalid id'})
-# #Remove dummy before deployment
-# #Remove dummy before deployment
-# #Remove dummy before deployment
-#     if(id=="dummy"):
-#         a = {"address_from":"34NjfWgoeH41M4MNdmi8LdSsRMG9qTcDpY","address_to":"GBH4TZYZ4IRCPO44CBOLFUHULU2WGALXTAVESQA6432MBJMABBB4GIYI","amount_from":"1","amount_to":"125258.30224260","currency_from":"btc","currency_to":"xlm","expected_amount":"1","extra_id_from":None,"extra_id_to":"abcd","id":"LKuAYqAUwMM","status":"finished","timestamp":"2020-09-13T19:23:24.767Z","tx_from":"input hash example","tx_to":"output hash example","type":"floating","updated_at":"2020-09-14T19:24:18.247Z"}
-#         return jsonify(a)
-#     session = requests.Session()
-#     session.trust_env = False
-#     a = session.get('https://api.simpleswap.io/v1/get_exchange?api_key={}&id={}'.format(API_KEY,id))
-#     if(a.status_code<400 and a.status_code>=200):
-#         a = a.json()
-#         a.pop('currencies', None)
-#     else:
-#         return jsonify({'error': 'may be invalid id'})
-#     return a
-
-
 
 @app.route('/getrate')
 def getRate():
@@ -424,6 +361,26 @@ def time():
         return jsonify(-1)
     else:
         return jsonify((20*60) - int(c.total_seconds()))
+
+@app.route('/sendcode',methods=["POST"])
+def sendcode():
+    try:
+        data = request.get_json(force=True)
+        username = data.get("username")
+        domain = data.get("domain")
+        if(None in (username,domain) or '' in (username,domain)):
+            raise Exception()
+    except Exception:
+        return {'error': 'Error in data'}
+    try:
+        token = s.dumps(username, salt='email-confirm')
+        msg = Message('Confirm Email', sender='hbutt877877@gmail.com', recipients=[username])
+        link = url_for('login', token=token, _external=True)
+        msg.body = 'Your link is {}?token={}'.format(domain,token)
+        mail.send(msg)
+        return {'success': 'code sent to email '} # + token    for testing
+    except Exception:
+        return {'error': 'Error in sending email'}
 
 if __name__ == "__main__":
     tl.start()
